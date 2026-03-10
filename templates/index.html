@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SourceAI - AI Supplier Intelligence</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>SourceAI</h1>
+      <p class="subtitle">AI Supplier Intelligence</p>
+
+      <section class="card">
+        <label for="product">Product name</label>
+        <input id="product" type="text" placeholder="e.g. LED lamp" />
+
+        <div class="row">
+          <div class="field">
+            <label for="selling-price">Selling price ($)</label>
+            <input id="selling-price" type="number" min="0.01" step="0.01" value="{{ default_selling_price }}" />
+          </div>
+          <div class="field">
+            <label for="shipping-rate">Shipping rate per CBM ($)</label>
+            <input id="shipping-rate" type="number" min="0.01" step="0.01" value="{{ default_shipping_rate }}" />
+          </div>
+        </div>
+
+        <div class="row actions">
+          <button id="analyze-btn">Generate sourcing analysis</button>
+          <button id="export-btn" disabled>Export Excel</button>
+        </div>
+        <p id="status" class="status"></p>
+        <p id="error" class="error"></p>
+      </section>
+
+      <section id="summary" class="summary hidden"></section>
+
+      <section class="card hidden" id="table-wrapper">
+        <table id="result-table">
+          <thead>
+            <tr>
+              <th>Supplier</th>
+              <th>Price</th>
+              <th>MOQ</th>
+              <th>Landed Cost</th>
+              <th>Profit</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      const analyzeBtn = document.getElementById('analyze-btn');
+      const exportBtn = document.getElementById('export-btn');
+      const productInput = document.getElementById('product');
+      const sellingPriceInput = document.getElementById('selling-price');
+      const shippingRateInput = document.getElementById('shipping-rate');
+      const error = document.getElementById('error');
+      const status = document.getElementById('status');
+      const summary = document.getElementById('summary');
+      const tableWrapper = document.getElementById('table-wrapper');
+      const tbody = document.querySelector('#result-table tbody');
+
+      let lastRequest = null;
+
+      const money = (value) => `$${Number(value).toFixed(2)}`;
+
+      const setLoading = (isLoading) => {
+        analyzeBtn.disabled = isLoading;
+        analyzeBtn.textContent = isLoading ? 'Generating...' : 'Generate sourcing analysis';
+      };
+
+      const renderSuppliers = (suppliers) => {
+        tbody.innerHTML = '';
+        suppliers.forEach((supplier) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${supplier.supplier}</td>
+            <td>${money(supplier.price_per_unit)}</td>
+            <td>${supplier.moq}</td>
+            <td>${money(supplier.landed_cost)}</td>
+            <td>${money(supplier.profit_per_unit)}</td>
+            <td>${supplier.score}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      };
+
+      const runAnalysis = async () => {
+        error.textContent = '';
+        status.textContent = '';
+
+        const product = productInput.value.trim();
+        const sellingPrice = sellingPriceInput.value;
+        const shippingRate = shippingRateInput.value;
+
+        if (!product) {
+          error.textContent = 'Please enter a product first.';
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              product,
+              selling_price: sellingPrice,
+              shipping_rate: shippingRate,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to generate analysis.');
+          }
+
+          lastRequest = {
+            product,
+            selling_price: data.selling_price,
+            shipping_rate: data.shipping_rate,
+          };
+
+          exportBtn.disabled = false;
+          status.textContent = `Analysis generated for ${data.product} (Selling: ${money(data.selling_price)}, Shipping/CBM: ${money(data.shipping_rate)}).`;
+
+          summary.classList.remove('hidden');
+          summary.innerHTML = `
+            <div class="kpi"><strong>Recommended Supplier:</strong> ${data.summary.recommended_supplier}</div>
+            <div class="kpi"><strong>Lowest Landed Cost:</strong> ${data.summary.lowest_landed_cost_supplier}</div>
+            <div class="kpi"><strong>Highest Profit:</strong> ${data.summary.highest_profit_margin_supplier}</div>
+          `;
+
+          renderSuppliers(data.suppliers);
+          tableWrapper.classList.remove('hidden');
+        } catch (err) {
+          error.textContent = err.message || 'Unexpected error.';
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      analyzeBtn.addEventListener('click', runAnalysis);
+      productInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') runAnalysis();
+      });
+
+      exportBtn.addEventListener('click', () => {
+        if (!lastRequest) return;
+        const params = new URLSearchParams({
+          product: lastRequest.product,
+          selling_price: String(lastRequest.selling_price),
+          shipping_rate: String(lastRequest.shipping_rate),
+        });
+        window.location.href = `/api/export?${params.toString()}`;
+      });
+    </script>
+  </body>
+</html>

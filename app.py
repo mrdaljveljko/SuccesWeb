@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import io
+import random
+from dataclasses import asdict, dataclass
 
 import pandas as pd
 from flask import Flask, jsonify, render_template, request, send_file
@@ -47,6 +49,88 @@ def rows_to_dataframes(rows: list, summary: dict[str, str]) -> tuple[pd.DataFram
         }
     )
 
+app = Flask(__name__)
+
+DEFAULT_SHIPPING_RATE = 120
+DEFAULT_SELLING_PRICE = 200
+
+LOCATIONS = ["Shenzhen", "Guangzhou", "Ningbo", "Yiwu", "Dongguan", "Foshan"]
+
+
+@dataclass
+class SupplierRow:
+    product: str
+    supplier: str
+    price_per_unit: float
+    moq: int
+    production_location: str
+    cbm: float
+    shipping_cost: float
+    landed_cost: float
+    profit_per_unit: float
+    profit_margin_percent: float
+    product_order_cost: float
+    total_investment: float
+    score: float
+
+
+def _seed_for_product(product: str) -> int:
+    return sum(ord(c) for c in product.strip().lower())
+
+
+def generate_supplier_analysis(product: str) -> list[SupplierRow]:
+    rng = random.Random(_seed_for_product(product))
+    rows: list[SupplierRow] = []
+
+    for idx in range(1, 6):
+        price = round(rng.uniform(25, 120), 2)
+        moq = rng.choice([100, 200, 300, 500, 1000])
+        cbm = round(rng.uniform(0.08, 0.6), 3)
+        shipping_cost = round(cbm * DEFAULT_SHIPPING_RATE, 2)
+        landed_cost = round(price + shipping_cost, 2)
+        profit_per_unit = round(DEFAULT_SELLING_PRICE - landed_cost, 2)
+        profit_margin = round((profit_per_unit / DEFAULT_SELLING_PRICE) * 100, 2)
+        product_order_cost = round(price * moq, 2)
+        total_investment = round(product_order_cost + shipping_cost, 2)
+        score = round(price * 0.4 + moq * 0.002 + cbm * 0.2, 4)
+
+        rows.append(
+            SupplierRow(
+                product=product,
+                supplier=f"Factory {idx}",
+                price_per_unit=price,
+                moq=moq,
+                production_location=rng.choice(LOCATIONS),
+                cbm=cbm,
+                shipping_cost=shipping_cost,
+                landed_cost=landed_cost,
+                profit_per_unit=profit_per_unit,
+                profit_margin_percent=profit_margin,
+                product_order_cost=product_order_cost,
+                total_investment=total_investment,
+                score=score,
+            )
+        )
+
+    return rows
+
+
+def build_summary(rows: list[SupplierRow]) -> dict[str, str]:
+    best_price = min(rows, key=lambda r: r.price_per_unit)
+    lowest_landed = min(rows, key=lambda r: r.landed_cost)
+    best_overall = min(rows, key=lambda r: r.score)
+    highest_profit_margin = max(rows, key=lambda r: r.profit_margin_percent)
+
+    return {
+        "recommended_supplier": best_overall.supplier,
+        "lowest_landed_cost_supplier": lowest_landed.supplier,
+        "highest_profit_margin_supplier": highest_profit_margin.supplier,
+        "best_price_supplier": best_price.supplier,
+    }
+
+
+def rows_to_dataframes(rows: list[SupplierRow], summary: dict[str, str]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    analysis_df = pd.DataFrame(asdict(r) for r in rows)
     summary_df = pd.DataFrame(
         {
             "Metric": [
@@ -73,6 +157,7 @@ def index():
         default_selling_price=DEFAULT_SELLING_PRICE,
         default_shipping_rate=DEFAULT_SHIPPING_RATE,
     )
+    return render_template("index.html")
 
 
 @app.post("/api/analyze")
@@ -92,6 +177,7 @@ def analyze():
         return jsonify({"error": shipping_rate_error}), 400
 
     rows = generate_supplier_analysis(product, selling_price=selling_price, shipping_rate=shipping_rate)
+    rows = generate_supplier_analysis(product)
     summary = build_summary(rows)
 
     return jsonify(
@@ -101,6 +187,10 @@ def analyze():
             "selling_price": selling_price,
             "summary": summary,
             "suppliers": rows_to_records(rows),
+            "shipping_rate": DEFAULT_SHIPPING_RATE,
+            "selling_price": DEFAULT_SELLING_PRICE,
+            "summary": summary,
+            "suppliers": [asdict(row) for row in rows],
         }
     )
 
@@ -120,6 +210,7 @@ def export_excel():
         return jsonify({"error": shipping_rate_error}), 400
 
     rows = generate_supplier_analysis(product, selling_price=selling_price, shipping_rate=shipping_rate)
+    rows = generate_supplier_analysis(product)
     summary = build_summary(rows)
     analysis_df, summary_df = rows_to_dataframes(rows, summary)
 

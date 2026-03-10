@@ -21,6 +21,19 @@ SourceAI is an AI-assisted sourcing and supplier analysis web application for pr
   - Highest profit margin supplier
   - Best price supplier
 - Export to `sourcing_catalog.xlsx` with:
+- Product input form (`Enter product`)
+- Auto-generated list of 5 suppliers
+- Cost and profitability calculations:
+  - Shipping cost (`CBM * $120`)
+  - Landed cost (`price + shipping`)
+  - Profit per unit and profit margin
+  - MOQ investment and total investment
+- Supplier ranking and recommendation:
+  - Best price supplier
+  - Lowest landed cost supplier
+  - Best overall supplier (score-based)
+  - Highest profit margin supplier
+- Export result to `sourcing_catalog.xlsx` with:
   - `Supplier Analysis` sheet
   - `Summary` sheet
 

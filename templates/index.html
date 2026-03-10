@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SourceAI - AI Supplier Intelligence</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>SourceAI</h1>
+      <p class="subtitle">AI Supplier Intelligence</p>
+
+      <section class="card">
+        <label for="product">Enter product</label>
+        <div class="row">
+          <input id="product" type="text" placeholder="e.g. LED lamp" />
+          <button id="analyze-btn">Generate sourcing analysis</button>
+          <button id="export-btn" disabled>Export Excel</button>
+        </div>
+        <p id="error" class="error"></p>
+      </section>
+
+      <section id="summary" class="summary hidden"></section>
+
+      <section class="card hidden" id="table-wrapper">
+        <table id="result-table">
+          <thead>
+            <tr>
+              <th>Supplier</th>
+              <th>Price</th>
+              <th>MOQ</th>
+              <th>Landed Cost</th>
+              <th>Profit</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      const analyzeBtn = document.getElementById('analyze-btn');
+      const exportBtn = document.getElementById('export-btn');
+      const productInput = document.getElementById('product');
+      const error = document.getElementById('error');
+      const summary = document.getElementById('summary');
+      const tableWrapper = document.getElementById('table-wrapper');
+      const tbody = document.querySelector('#result-table tbody');
+
+      let lastProduct = '';
+
+      const money = (value) => `$${Number(value).toFixed(2)}`;
+
+      analyzeBtn.addEventListener('click', async () => {
+        error.textContent = '';
+        const product = productInput.value.trim();
+
+        if (!product) {
+          error.textContent = 'Please enter a product first.';
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to generate analysis.');
+          }
+
+          lastProduct = product;
+          exportBtn.disabled = false;
+
+          summary.classList.remove('hidden');
+          summary.innerHTML = `
+            <div class="kpi"><strong>Recommended Supplier:</strong> ${data.summary.recommended_supplier}</div>
+            <div class="kpi"><strong>Lowest Landed Cost:</strong> ${data.summary.lowest_landed_cost_supplier}</div>
+            <div class="kpi"><strong>Highest Profit:</strong> ${data.summary.highest_profit_margin_supplier}</div>
+          `;
+
+          tbody.innerHTML = '';
+          data.suppliers.forEach((supplier) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${supplier.supplier}</td>
+              <td>${money(supplier.price_per_unit)}</td>
+              <td>${supplier.moq}</td>
+              <td>${money(supplier.landed_cost)}</td>
+              <td>${money(supplier.profit_per_unit)}</td>
+              <td>${supplier.score}</td>
+            `;
+            tbody.appendChild(row);
+          });
+
+          tableWrapper.classList.remove('hidden');
+        } catch (err) {
+          error.textContent = err.message;
+        }
+      });
+
+      exportBtn.addEventListener('click', () => {
+        if (!lastProduct) return;
+        window.location.href = `/api/export?product=${encodeURIComponent(lastProduct)}`;
+      });
+    </script>
+  </body>
+</html>

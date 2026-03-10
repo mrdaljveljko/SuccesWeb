@@ -1,2 +1,38 @@
-# SuccesWeb
-My personal website
+# SourceAI
+
+SourceAI is an AI-assisted sourcing and supplier analysis web application for products sourced from China.
+
+## Features
+
+- Product input form (`Enter product`)
+- Auto-generated list of 5 suppliers
+- Cost and profitability calculations:
+  - Shipping cost (`CBM * $120`)
+  - Landed cost (`price + shipping`)
+  - Profit per unit and profit margin
+  - MOQ investment and total investment
+- Supplier ranking and recommendation:
+  - Best price supplier
+  - Lowest landed cost supplier
+  - Best overall supplier (score-based)
+  - Highest profit margin supplier
+- Export result to `sourcing_catalog.xlsx` with:
+  - `Supplier Analysis` sheet
+  - `Summary` sheet
+
+## Tech
+
+- Python
+- Flask
+- Pandas
+
+## Run locally
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+Open: `http://localhost:8000`

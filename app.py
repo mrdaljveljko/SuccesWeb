@@ -7,6 +7,48 @@ from dataclasses import asdict, dataclass
 import pandas as pd
 from flask import Flask, jsonify, render_template, request, send_file
 
+from sourceai_engine import (
+    DEFAULT_SELLING_PRICE,
+    DEFAULT_SHIPPING_RATE,
+    build_summary,
+    generate_supplier_analysis,
+    rows_to_records,
+)
+
+app = Flask(__name__)
+
+
+def _parse_positive_number(raw_value: object, field_name: str) -> tuple[float | None, str | None]:
+    try:
+        value = float(raw_value)
+    except (TypeError, ValueError):
+        return None, f"{field_name} must be a valid number."
+
+    if value <= 0:
+        return None, f"{field_name} must be greater than 0."
+
+    return value, None
+
+
+def rows_to_dataframes(rows: list, summary: dict[str, str]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    analysis_df = pd.DataFrame(rows_to_records(rows)).rename(
+        columns={
+            "product": "Product",
+            "supplier": "Supplier",
+            "price_per_unit": "Price per unit",
+            "moq": "MOQ",
+            "production_location": "Production location",
+            "cbm": "CBM",
+            "shipping_cost": "Shipping cost",
+            "landed_cost": "Landed cost",
+            "profit_per_unit": "Profit per unit",
+            "profit_margin_percent": "Profit margin %",
+            "product_order_cost": "Product order cost",
+            "total_investment": "Total investment",
+            "score": "Score",
+        }
+    )
+
 app = Flask(__name__)
 
 DEFAULT_SHIPPING_RATE = 120
@@ -110,6 +152,11 @@ def rows_to_dataframes(rows: list[SupplierRow], summary: dict[str, str]) -> tupl
 
 @app.get("/")
 def index():
+    return render_template(
+        "index.html",
+        default_selling_price=DEFAULT_SELLING_PRICE,
+        default_shipping_rate=DEFAULT_SHIPPING_RATE,
+    )
     return render_template("index.html")
 
 
@@ -121,12 +168,25 @@ def analyze():
     if not product:
         return jsonify({"error": "Product is required."}), 400
 
+    selling_price, selling_price_error = _parse_positive_number(payload.get("selling_price"), "Selling price")
+    if selling_price_error:
+        return jsonify({"error": selling_price_error}), 400
+
+    shipping_rate, shipping_rate_error = _parse_positive_number(payload.get("shipping_rate"), "Shipping rate per CBM")
+    if shipping_rate_error:
+        return jsonify({"error": shipping_rate_error}), 400
+
+    rows = generate_supplier_analysis(product, selling_price=selling_price, shipping_rate=shipping_rate)
     rows = generate_supplier_analysis(product)
     summary = build_summary(rows)
 
     return jsonify(
         {
             "product": product,
+            "shipping_rate": shipping_rate,
+            "selling_price": selling_price,
+            "summary": summary,
+            "suppliers": rows_to_records(rows),
             "shipping_rate": DEFAULT_SHIPPING_RATE,
             "selling_price": DEFAULT_SELLING_PRICE,
             "summary": summary,
@@ -141,6 +201,15 @@ def export_excel():
     if not product:
         return jsonify({"error": "Product query parameter is required."}), 400
 
+    selling_price, selling_price_error = _parse_positive_number(request.args.get("selling_price"), "Selling price")
+    if selling_price_error:
+        return jsonify({"error": selling_price_error}), 400
+
+    shipping_rate, shipping_rate_error = _parse_positive_number(request.args.get("shipping_rate"), "Shipping rate per CBM")
+    if shipping_rate_error:
+        return jsonify({"error": shipping_rate_error}), 400
+
+    rows = generate_supplier_analysis(product, selling_price=selling_price, shipping_rate=shipping_rate)
     rows = generate_supplier_analysis(product)
     summary = build_summary(rows)
     analysis_df, summary_df = rows_to_dataframes(rows, summary)

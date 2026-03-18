@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Register · AstroAi{% endblock %}
+{% block content %}
+<section class="auth-shell card glass reveal-up narrow polished-auth">
+  <div>
+    <span class="eyebrow">Begin your onboarding</span>
+    <h1>Create your AstroAi account</h1>
+    <p class="muted">You’ll start with a welcome experience, your day-one guidance, and a streak-ready token reward.</p>
+  </div>
+  <form method="post" class="form-grid app-form">
+    <label>Name<input type="text" name="name" placeholder="Luna Rivers" required /></label>
+    <label>Email<input type="email" name="email" placeholder="you@example.com" required /></label>
+    <label>Password<input type="password" name="password" placeholder="Create a password" required /></label>
+    <label>Zodiac sign
+      <select name="zodiac_sign" required>
+        <option value="">Select your sign</option>
+        {% for sign in zodiac_signs %}<option value="{{ sign }}">{{ sign }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Birth date <span class="muted">(optional)</span><input type="date" name="birth_date" /></label>
+    <button class="primary-button" type="submit">Create account</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% from 'components/ui_macros.html' import status_pill %}
+{% block title %}Upgrade to Premium · AstroAi{% endblock %}
+{% block content %}
+<section class="card glass reveal-up premium-shell">
+  <div class="section-heading">
+    <div>
+      <div class="hero-badges">
+        {{ status_pill('Daily core access', 'premium', '✦') }}
+        {{ status_pill('Clearer value', 'reward', '☾') }}
+      </div>
+      <span class="eyebrow">Upgrade path</span>
+      <h1>Move from occasional guidance to a daily premium ritual</h1>
+      <p class="muted">Premium is now framed around clarity and consistency: your daily horoscope and question are included, visible, and easier to build a habit around.</p>
+    </div>
+  </div>
+  <div class="comparison-grid polished-comparison">
+    <div class="mini-card plan-column subdued">
+      <h2>Free</h2>
+      <ul class="stack-list bullets">
+        {% for item in free_features %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+      <p class="muted">Best for light exploration and token-powered unlocks.</p>
+    </div>
+    <div class="mini-card premium-card plan-column highlighted">
+      <div class="hero-badges">{{ status_pill('Recommended for retention', 'premium', '✦') }}</div>
+      <h2>Premium ✦</h2>
+      <ul class="stack-list bullets">
+        {% for item in premium_features %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+      <p class="muted">Best for users who want daily value without friction.</p>
+    </div>
+  </div>
+  {% if user.plan_type == plan_premium %}
+    <div class="empty-state"><p>You’re already premium.</p></div>
+  {% else %}
+    <form method="post" class="upgrade-cta">
+      <button class="primary-button premium-glow" type="submit">Activate Premium (Mock)</button>
+      <p class="helper-copy">Stripe and real billing can be connected later without changing this product structure.</p>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

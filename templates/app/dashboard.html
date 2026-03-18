@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% from 'components/ui_macros.html' import action_tile, metric_card, status_pill %}
+{% block title %}Dashboard · AstroAi{% endblock %}
+{% block content %}
+<section class="dashboard-grid polished-dashboard">
+  <article class="card glass hero-panel reveal-up">
+    <div class="hero-panel-header stack-mobile">
+      <div>
+        <div class="hero-badges">
+          {{ status_pill(user.plan_type|capitalize, 'premium' if user.plan_type == plan_premium else 'default', '✦') }}
+          {{ status_pill(user.zodiac_sign, 'default', '☾') }}
+        </div>
+        <span class="eyebrow">{{ 'Welcome to your first AstroAi day' if welcome_mode else 'Your daily cosmic dashboard' }}</span>
+        <h1>{{ user.name }}, your guidance hub is ready.</h1>
+        <p class="muted">Track what you’ve used, what’s available now, and where Astro Tokens or Premium unlock more depth.</p>
+      </div>
+      <div class="mini-card spotlight-card">
+        <span class="muted">Current focus</span>
+        <strong>{{ 'Complete your first-day ritual' if welcome_mode else 'Keep your streak alive and use today’s best action' }}</strong>
+      </div>
+    </div>
+
+    <div class="stat-grid premium-metrics">
+      {{ metric_card('Astro Tokens', user.astro_token_balance, 'Spend on extra readings and unlocks.', 'glow') }}
+      {{ metric_card('Streak', user.streak_count ~ ' days', 'Daily rewards build your balance.', '') }}
+      {{ metric_card('Today', 'Available' if not state.today_question_used or not state.today_horoscope_used else 'Mostly used', 'Daily included access resets on the next cycle.', '') }}
+      {{ metric_card('Plan value', 'Premium daily' if user.plan_type == plan_premium else 'Free + tokens', 'Included access stays clear and visible.', '') }}
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-head">
+        <strong>Streak milestone progress</strong>
+        <span class="muted">{{ user.streak_count }}/{{ streak_goal }} days</span>
+      </div>
+      <div class="progress-track"><span style="width: {{ streak_progress }}%"></span></div>
+      <p class="muted small-copy">Your streak is designed to feel rewarding, visible, and easy to understand on mobile.</p>
+    </div>
+  </article>
+
+  <article class="card reveal-up delay-1 full-span">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">Today’s actions</span>
+        <h2>What you can do right now</h2>
+      </div>
+      {% if user.plan_type != plan_premium %}<a class="ghost-button premium-outline" href="{{ url_for('upgrade') }}">See Premium value</a>{% endif %}
+    </div>
+    <div class="action-grid">
+      {{ action_tile('Read Horoscope', horoscope_access.message, url_for('horoscope'), 'Open Horoscope', 'cosmic', 'available' if horoscope_access.allowed else 'token_unlock' if horoscope_access.requires_tokens else 'locked', '☼') }}
+      {{ action_tile('Ask AstroAi', question_access.message, url_for('ask'), 'Open Ask', 'cosmic', 'available' if question_access.allowed else 'token_unlock' if question_access.requires_tokens else 'locked', '✧') }}
+      {{ action_tile('Meditation', meditation_access.message, url_for('meditation'), 'Open Meditation', 'serene', 'available' if meditation_access.allowed else 'locked', '☽') }}
+      {{ action_tile('Spend Tokens', 'Use tokens on natal charts, astrology readings, and extra guidance.', url_for('tokens'), 'View Token Store', 'reward', 'available', '◌') }}
+    </div>
+  </article>
+
+  <article class="card reveal-up delay-1">
+    <div class="section-heading compact">
+      <div>
+        <span class="eyebrow">Usage clarity</span>
+        <h2>Included access status</h2>
+      </div>
+    </div>
+    <div class="benefit-grid polished-benefits">
+      <div class="benefit-card {% if not state.today_horoscope_used %}active{% else %}inactive{% endif %}"><span>Horoscope</span><strong>{{ 'Available' if not state.today_horoscope_used else 'Used today' }}</strong></div>
+      <div class="benefit-card {% if not state.today_question_used %}active{% else %}inactive{% endif %}"><span>AstroAi question</span><strong>{{ 'Available' if not state.today_question_used else 'Used today' }}</strong></div>
+      <div class="benefit-card {% if not state.week_meditation_used %}active{% else %}inactive{% endif %}"><span>Meditation</span><strong>{{ 'Available this week' if not state.week_meditation_used else 'Used this week' }}</strong></div>
+      <div class="benefit-card {% if state.today_login_claimed %}rewarded{% else %}inactive{% endif %}"><span>Login reward</span><strong>{{ 'Claimed today' if state.today_login_claimed else 'Claim on next login' }}</strong></div>
+    </div>
+  </article>
+
+  <article class="card reveal-up delay-2">
+    <div class="section-heading compact"><div><span class="eyebrow">Recent history</span><h2>Token activity</h2></div></div>
+    <ul class="activity-list">
+      {% for item in transactions %}
+      <li>
+        <div>
+          <strong>{{ item.source.replace('_', ' ')|title }}</strong>
+          <span class="muted">{{ item.created_at[:10] }}</span>
+        </div>
+        <span class="token-chip {{ item.type }}">{{ '+' if item.type == 'earn' else '-' }}{{ item.amount }}</span>
+      </li>
+      {% else %}
+      <li class="muted">No token activity yet.</li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="card reveal-up delay-1">
+    <div class="section-heading compact"><div><span class="eyebrow">Guidance memory</span><h2>Recent AstroAi answers</h2></div></div>
+    <ul class="stack-list">
+      {% for item in recent_questions %}
+      <li class="mini-card">
+        <strong>{{ item.question_text }}</strong>
+        <p class="muted">{{ item.answer_text[:140] }}{% if item.answer_text|length > 140 %}…{% endif %}</p>
+      </li>
+      {% else %}
+      <li class="muted">Ask your first question to build your personal guidance history.</li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="card reveal-up delay-2">
+    <div class="section-heading compact"><div><span class="eyebrow">Meditation shelf</span><h2>Current rituals</h2></div></div>
+    <div class="stack-list">
+      {% for meditation in meditations %}
+      <div class="mini-card ritual-card">
+        <strong>{{ meditation.title }}</strong>
+        <p class="muted">{{ meditation.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

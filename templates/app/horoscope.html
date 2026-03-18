@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% from 'components/ui_macros.html' import status_pill %}
+{% block title %}Daily Horoscope · AstroAi{% endblock %}
+{% block content %}
+<section class="two-column feature-page">
+  <article class="card glass reveal-up">
+    <div class="section-heading">
+      <div>
+        <div class="hero-badges">
+          {{ status_pill(user.zodiac_sign, 'default', '☼') }}
+          {{ status_pill(user.plan_type|capitalize, 'premium' if user.plan_type == plan_premium else 'default', '✦') }}
+        </div>
+        <span class="eyebrow">Daily Horoscope</span>
+        <h1>{{ user.zodiac_sign }} guidance for today</h1>
+        <p class="muted">{{ access.message }}</p>
+      </div>
+    </div>
+    {% if horoscope %}
+      <div class="reading-card featured-reading reveal-up delay-1">
+        <p class="muted">{{ horoscope.date }}</p>
+        <h2>{{ horoscope.title }}</h2>
+        <p>{{ horoscope.content }}</p>
+      </div>
+    {% else %}
+      <div class="empty-state locked-state">
+        <strong>No reading unlocked yet</strong>
+        <p>{{ access.message }}</p>
+      </div>
+    {% endif %}
+  </article>
+
+  <article class="card reveal-up delay-1 side-panel">
+    <h2>Unlock options</h2>
+    <div class="stack-list">
+      <form method="post" class="inline-form">
+        <input type="hidden" name="action" value="included" />
+        <button class="primary-button" type="submit" {% if not access.allowed %}disabled{% endif %}>Use included access</button>
+      </form>
+      <form method="post" class="inline-form">
+        <input type="hidden" name="action" value="unlock_tokens" />
+        <button class="ghost-button" type="submit">Unlock with {{ token_costs.extra_horoscope }} tokens</button>
+      </form>
+      <div class="mini-card">
+        <strong>Why this feels premium</strong>
+        <p class="muted">Included access stays obvious, token unlocks are clear, and the result card feels like a real astrology product instead of a plain text response.</p>
+      </div>
+    </div>
+  </article>
+</section>
+{% endblock %}

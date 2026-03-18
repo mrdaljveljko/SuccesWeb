@@ -1,0 +1,25 @@
+{% macro status_pill(label, tone='default', icon='✦') -%}
+<span class="status-pill {{ tone }}"><span class="status-pill-icon">{{ icon }}</span>{{ label }}</span>
+{%- endmacro %}
+
+{% macro action_tile(title, detail, href=None, button_label='Open', tone='default', state='available', icon='✦') -%}
+<div class="action-tile {{ tone }} {{ state }}">
+  <div class="action-tile-top">
+    <span class="action-icon">{{ icon }}</span>
+    <span class="action-state {{ state }}">{{ state|replace('_', ' ')|title }}</span>
+  </div>
+  <div>
+    <strong>{{ title }}</strong>
+    <p class="muted">{{ detail }}</p>
+  </div>
+  {% if href %}<a class="ghost-button" href="{{ href }}">{{ button_label }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro metric_card(label, value, subtext='', tone='default') -%}
+<div class="stat-card {{ tone }}">
+  <span>{{ label }}</span>
+  <strong>{{ value }}</strong>
+  {% if subtext %}<p class="muted small-copy">{{ subtext }}</p>{% endif %}
+</div>
+{%- endmacro %}

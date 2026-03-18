@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% from 'components/ui_macros.html' import status_pill %}
+{% block title %}Meditation · AstroAi{% endblock %}
+{% block content %}
+<section class="two-column feature-page">
+  <article class="card glass reveal-up">
+    <div class="section-heading">
+      <div>
+        <div class="hero-badges">
+          {{ status_pill('Weekly free access' if user.plan_type != plan_premium else 'Premium access', 'serene', '☽') }}
+        </div>
+        <span class="eyebrow">Meditation</span>
+        <h1>Choose your ritual</h1>
+        <p class="muted">Free users get one meditation per week. Premium users can browse the current MVP library more freely.</p>
+      </div>
+    </div>
+    {% if active %}
+      <div class="reading-card featured-reading">
+        <p class="muted">{{ active.duration }} · {{ active.content_type|capitalize }}</p>
+        <h2>{{ active.title }}</h2>
+        <p>{{ active.description }}</p>
+        <p>{{ active.text_content }}</p>
+      </div>
+    {% endif %}
+  </article>
+
+  <article class="card reveal-up delay-1 side-panel">
+    <h2>Meditation library</h2>
+    <div class="stack-list">
+      {% for meditation in meditations %}
+      <form method="post" class="mini-card ritual-card">
+        <input type="hidden" name="meditation_id" value="{{ meditation.id }}" />
+        <strong>{{ meditation.title }}</strong>
+        <p class="muted">{{ meditation.description }}</p>
+        <button class="ghost-button" type="submit" {% if not access.allowed and user.plan_type != plan_premium %}disabled{% endif %}>Open meditation</button>
+      </form>
+      {% endfor %}
+    </div>
+    <div class="empty-state"><p>{{ access.message }}</p></div>
+  </article>
+</section>
+{% endblock %}

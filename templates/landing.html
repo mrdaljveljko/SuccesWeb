@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% from 'components/ui_macros.html' import status_pill %}
+{% block title %}AstroAi · Mystical Guidance{% endblock %}
+{% block content %}
+<section class="hero-grid landing-hero">
+  <div class="hero-copy card glass reveal-up">
+    <div class="hero-badges">
+      {{ status_pill('Free + Premium plans', 'premium', '☾') }}
+      {{ status_pill('Daily rewards', 'reward', '✦') }}
+    </div>
+    <span class="eyebrow">Astrology guidance that feels ritual-worthy</span>
+    <h1>Horoscopes, spiritual answers, meditation, and reward loops in one premium-feeling AstroAi MVP.</h1>
+    <p class="lede">AstroAi helps users return every day with a clear consumer promise: meaningful free value, premium daily access, and Astro Tokens that make progress feel tangible.</p>
+    <div class="button-row">
+      <a class="primary-button" href="{{ url_for('register') }}">Start your cosmic profile</a>
+      <a class="ghost-button" href="{{ url_for('login') }}">Log in</a>
+    </div>
+    <div class="feature-strip">
+      <div class="mini-card"><strong>Free</strong><p class="muted">Day-1 horoscope + question, weekly meditation, login rewards.</p></div>
+      <div class="mini-card"><strong>Premium</strong><p class="muted">Daily horoscope, daily AstroAi question, elevated status, smoother habit loop.</p></div>
+      <div class="mini-card"><strong>Tokens</strong><p class="muted">Unlock extra readings and guidance without changing your core plan.</p></div>
+    </div>
+  </div>
+
+  <div class="card dashboard-preview reveal-up delay-1">
+    <div class="phone-frame">
+      <div class="preview-top">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <div class="preview-body">
+        {{ status_pill('Premium aura', 'premium', '✦') }}
+        <h3>Today’s cosmic dashboard</h3>
+        <div class="preview-card shimmer">
+          <p class="muted">Today’s action</p>
+          <strong>Ask AstroAi about your next aligned move</strong>
+        </div>
+        <div class="preview-card preview-split">
+          <div><p class="muted">Astro Tokens</p><strong>65</strong></div>
+          <div><p class="muted">Streak</p><strong>7 days</strong></div>
+        </div>
+        <div class="preview-card">
+          <p class="muted">Why users return</p>
+          <strong>Reward, ritual, clarity, and a clear upgrade path.</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="feature-grid">
+  <article class="card reveal-up">
+    <h3>Clear first-day value</h3>
+    <p>New users immediately understand what they can do first: claim their welcome experience, read a horoscope, ask one question, and begin a streak.</p>
+  </article>
+  <article class="card reveal-up delay-1">
+    <h3>Elegant plan clarity</h3>
+    <p>Free and Premium are visually distinct so users understand included access, token unlocks, and what premium improves without aggressive upselling.</p>
+  </article>
+  <article class="card reveal-up delay-2">
+    <h3>Scalable content architecture</h3>
+    <p>The UI feels complete now while preserving the content and service architecture needed for future curated banks, seasonal content, and AI-powered responses.</p>
+  </article>
+</section>
+{% endblock %}

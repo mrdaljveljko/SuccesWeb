@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% from 'components/ui_macros.html' import status_pill %}
+{% block title %}Ask AstroAi · AstroAi{% endblock %}
+{% block content %}
+<section class="two-column feature-page">
+  <article class="card glass reveal-up">
+    <div class="section-heading">
+      <div>
+        <div class="hero-badges">
+          {{ status_pill('Included access' if access.allowed else 'Token unlock available' if access.requires_tokens else 'Locked today', 'reward' if access.allowed else 'default', '✧') }}
+        </div>
+        <span class="eyebrow">Ask AstroAi</span>
+        <h1>Spiritual and astrology guidance on demand</h1>
+        <p class="muted">Placeholder content remains intact, but the experience is now more app-like, scannable, and reassuring for users.</p>
+      </div>
+    </div>
+    <form method="post" class="form-grid app-form">
+      <label>Your question
+        <textarea name="question_text" rows="5" placeholder="What should I focus on emotionally this week?"></textarea>
+      </label>
+      <div class="button-row wrap">
+        <button class="primary-button" type="submit">Use included access</button>
+        <button class="ghost-button" type="submit" name="action" value="unlock_tokens">Unlock extra with {{ token_costs.extra_question }} tokens</button>
+      </div>
+      <p class="helper-copy">{{ access.message }}</p>
+    </form>
+    {% if answer %}
+      <div class="reading-card answer-card shimmer reveal-up delay-1">
+        <p class="muted">Source: {{ answer.source_type.replace('_', ' ')|title }}</p>
+        <h2>{{ answer.question_text }}</h2>
+        <p>{{ answer.answer_text }}</p>
+      </div>
+    {% else %}
+      <div class="empty-state locked-state"><p>{{ access.message }}</p></div>
+    {% endif %}
+  </article>
+
+  <article class="card reveal-up delay-1 side-panel">
+    <h2>Question history</h2>
+    <div class="stack-list">
+      {% for item in recent_questions %}
+        <div class="mini-card">
+          <strong>{{ item.question_text }}</strong>
+          <p class="muted">{{ item.created_at[:10] }} · {{ item.source_type.replace('_', ' ')|title }}</p>
+        </div>
+      {% else %}
+        <p class="muted">No questions yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% from 'components/ui_macros.html' import status_pill %}
+{% block title %}Profile · AstroAi{% endblock %}
+{% block content %}
+<section class="two-column feature-page">
+  <article class="card glass reveal-up">
+    <div class="section-heading">
+      <div>
+        <div class="hero-badges">
+          {{ status_pill(user.plan_type|capitalize, 'premium' if user.plan_type == plan_premium else 'default', '✦') }}
+          {{ status_pill(user.zodiac_sign, 'default', '☾') }}
+        </div>
+        <span class="eyebrow">Profile & Settings</span>
+        <h1>Personal details for better future readings</h1>
+      </div>
+    </div>
+    <form method="post" class="form-grid app-form">
+      <label>Name<input type="text" name="name" value="{{ user.name }}" required /></label>
+      <label>Email<input type="email" value="{{ user.email }}" disabled /></label>
+      <label>Zodiac sign
+        <select name="zodiac_sign" required>
+          {% for sign in zodiac_signs %}
+            <option value="{{ sign }}" {% if sign == user.zodiac_sign %}selected{% endif %}>{{ sign }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Birth date<input type="date" name="birth_date" value="{{ user.birth_date or '' }}" /></label>
+      <button class="primary-button" type="submit">Save profile</button>
+    </form>
+  </article>
+
+  <article class="card reveal-up delay-1 side-panel">
+    <h2>Account status</h2>
+    <div class="stack-list">
+      <div class="mini-card"><strong>Plan</strong><p class="muted">{{ user.plan_type|capitalize }}</p></div>
+      <div class="mini-card"><strong>Tokens</strong><p class="muted">{{ user.astro_token_balance }}</p></div>
+      <div class="mini-card"><strong>Streak</strong><p class="muted">{{ user.streak_count }} days</p></div>
+      <div class="mini-card"><strong>Future-ready fields</strong><p class="muted">Birth time, birth place, natal chart data, and billing status can be added without changing the core profile flow.</p></div>
+    </div>
+  </article>
+</section>
+{% endblock %}

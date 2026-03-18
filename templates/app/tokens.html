@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% from 'components/ui_macros.html' import status_pill %}
+{% block title %}Astro Tokens · AstroAi{% endblock %}
+{% block content %}
+<section class="two-column feature-page">
+  <article class="card glass reveal-up">
+    <div class="section-heading">
+      <div>
+        <div class="hero-badges">
+          {{ status_pill(user.astro_token_balance ~ ' tokens', 'reward', '✦') }}
+          {{ status_pill(user.streak_count ~ ' day streak', 'default', '☄') }}
+        </div>
+        <span class="eyebrow">Astro Tokens</span>
+        <h1>Rewards that turn habit into unlocks</h1>
+        <p class="muted">Tokens are now presented more clearly as a reward layer: you earn them through daily consistency and spend them on special reads and extra guidance.</p>
+      </div>
+    </div>
+    <div class="feature-grid three-up">
+      {% for item in items %}
+      <form method="post" class="mini-card token-card reveal-up delay-1">
+        <input type="hidden" name="source" value="{{ item.key }}" />
+        <strong>{{ item.label }}</strong>
+        <p class="muted">{{ item.description }}</p>
+        <span class="token-chip earn">{{ item.cost }} tokens</span>
+        <button class="ghost-button" type="submit">Unlock</button>
+      </form>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="card reveal-up delay-1 side-panel">
+    <h2>Transaction history</h2>
+    <ul class="activity-list">
+      {% for item in transactions %}
+      <li>
+        <div>
+          <strong>{{ item.source.replace('_', ' ')|title }}</strong>
+          <span class="muted">{{ item.created_at[:19].replace('T', ' ') }}</span>
+        </div>
+        <span class="token-chip {{ item.type }}">{{ '+' if item.type == 'earn' else '-' }}{{ item.amount }}</span>
+      </li>
+      {% else %}
+      <li class="muted">No transactions yet.</li>
+      {% endfor %}
+    </ul>
+  </article>
+</section>
+{% endblock %}
